@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b192c">
+  <title>E-Surat Deputi Infrastruktur Dasar — Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f1f5f9;color:#0f172a}
+    .nav-active{background:#d97706;color:#111827;font-weight:700}.field{width:100%;border:1px solid #cbd5e1;border-radius:.65rem;padding:.65rem .8rem;font-size:.875rem;background:white}.field:focus{outline:2px solid #38bdf8;border-color:#0284c7}.btn{border-radius:.65rem;padding:.6rem .9rem;font-size:.82rem;font-weight:700}.btn-primary{background:#0284c7;color:white}.btn-primary:hover{background:#0369a1}.btn-dark{background:#0b192c;color:white}.btn-muted{background:#e2e8f0;color:#334155}.btn-danger{background:#fee2e2;color:#b91c1c}.panel{background:white;border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 1px 2px #0f172a0a}.label{font-size:.72rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem}.hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="bg-amber-100 border-b border-amber-300 text-amber-950 text-xs px-4 py-2 text-center">MODE UJI COBA — gunakan data dummy. Jangan masukkan surat kedinasan atau dokumen rahasia.</div>
+  <header class="bg-[#0b192c] text-white border-b-4 border-amber-600">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div><div class="font-extrabold text-sm md:text-base">KEMENTERIAN KOORDINATOR BIDANG INFRASTRUKTUR DAN PEMBANGUNAN KEWILAYAHAN</div><div class="text-amber-300 text-xs font-semibold mt-1">DEPUTI BIDANG INFRASTRUKTUR DASAR · E-SURAT TEST</div></div>
+      <div id="userbar" class="hidden items-center gap-3 text-xs"><div class="text-right"><div id="user-name" class="font-bold"></div><div id="user-role" class="text-amber-300"></div></div><button id="logout-btn" class="btn btn-muted">Keluar</button></div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6">
+    <section id="config-warning" class="panel p-6 max-w-2xl mx-auto my-10 hidden">
+      <h1 class="text-xl font-bold mb-2">Hubungkan ke Supabase</h1>
+      <p class="text-sm text-slate-600 mb-3">Website statis ini sudah siap untuk GitHub Pages. Isi <code>supabase-config.js</code> dengan Project URL dan publishable key dari Supabase, lalu unggah ulang ke GitHub.</p>
+      <ol class="list-decimal ml-5 text-sm space-y-1"><li>Buat project Supabase gratis.</li><li>Jalankan <code>supabase/schema.sql</code> di SQL Editor.</li><li>Isi konfigurasi frontend menggunakan publishable key, bukan secret/service_role.</li></ol>
+    </section>
+
+    <section id="auth-screen" class="max-w-2xl mx-auto my-8 panel p-5 md:p-8 hidden">
+      <div class="mb-6"><h1 class="text-2xl font-extrabold">Portal E-Surat</h1><p class="text-sm text-slate-500">Deputi Bidang Infrastruktur Dasar · Lingkungan pengujian</p></div>
+      <div class="flex gap-2 mb-5"><button class="btn btn-primary" id="show-login">Masuk</button><button class="btn btn-muted" id="show-register">Daftar akun</button></div>
+      <form id="login-form" class="space-y-4">
+        <div><label class="label">Email</label><input class="field" name="email" type="email" autocomplete="username" required></div>
+        <div><label class="label">Password</label><input class="field" name="password" type="password" autocomplete="current-password" required></div>
+        <button class="btn btn-primary w-full" type="submit">Login</button>
+      </form>
+      <form id="register-form" class="space-y-4 hidden">
+        <div><label class="label">Nama lengkap</label><input class="field" name="full_name" required maxlength="120"></div>
+        <div><label class="label">Email</label><input class="field" name="email" type="email" required></div>
+        <div><label class="label">Unit kerja</label><select class="field" name="unit_id" id="register-unit" required></select></div>
+        <div><label class="label">Password (minimal 8 karakter)</label><input class="field" name="password" type="password" minlength="8" required></div>
+        <button class="btn btn-primary w-full" type="submit">Daftar dan tunggu persetujuan</button>
+        <p class="text-xs text-slate-500">Akun baru berstatus menunggu persetujuan Admin. Pendaftar tidak dapat memilih peran admin.</p>
+      </form>
+      <div id="auth-message" class="text-sm mt-4" role="status"></div>
+    </section>
+
+    <section id="pending-screen" class="max-w-xl mx-auto my-12 panel p-8 text-center hidden">
+      <i class="fa-solid fa-hourglass-half text-4xl text-amber-500"></i><h2 class="text-xl font-bold mt-4">Akun menunggu persetujuan</h2><p class="text-sm text-slate-600 mt-2">Registrasi berhasil. Admin Deputi perlu mengaktifkan akun dan memverifikasi unit kerja sebelum akses diberikan.</p><button id="pending-logout" class="btn btn-dark mt-5">Keluar</button>
+    </section>
+
+    <section id="app-shell" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-[230px_1fr] gap-4">
+        <aside class="panel p-3 h-fit">
+          <div class="text-[11px] uppercase font-bold text-slate-400 px-3 py-2">Menu Utama</div>
+          <nav id="navigation" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1">
+            <button data-view="dashboard" class="nav-item nav-active text-left rounded-lg px-3 py-2 text-sm"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+            <button data-view="letters" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-envelope w-5"></i> Persuratan</button>
+            <button data-view="tracking" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-route w-5"></i> Tracking</button>
+            <button data-view="dispositions" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-share-nodes w-5"></i> Disposisi</button>
+            <button data-view="tasks" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-list-check w-5"></i> Tugas</button>
+            <button data-view="archive" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-box-archive w-5"></i> Arsip</button>
+            <button data-view="reports" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-chart-column w-5"></i> Laporan</button>
+            <button data-view="notifications" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100"><i class="fa-solid fa-bell w-5"></i> Notifikasi <span id="notif-count" class="text-[10px] bg-red-100 text-red-700 rounded-full px-1.5 ml-1">0</span></button>
+            <button data-view="users" id="users-nav" class="nav-item text-left rounded-lg px-3 py-2 text-sm hover:bg-slate-100 hidden"><i class="fa-solid fa-users w-5"></i> Manajemen Akun</button>
+          </nav>
+          <div class="mt-4 border-t pt-3 px-3 text-[11px] text-slate-500"><div>Unit: <strong id="unit-name" class="text-slate-700"></strong></div><div class="mt-1">Hak akses diterapkan oleh database (RLS).</div></div>
+        </aside>
+
+        <div class="min-w-0">
+          <section id="view-dashboard" class="app-view space-y-4">
+            <div class="panel p-5"><div class="flex flex-wrap items-center justify-between gap-3"><div><h1 class="text-xl font-extrabold">Dashboard Persuratan</h1><p class="text-sm text-slate-500">Ringkasan data sesuai hak akses akun.</p></div><button id="refresh-btn" class="btn btn-muted"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button></div></div>
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-3" id="kpi-grid"></div>
+            <div class="panel p-4"><h2 class="font-bold mb-3">Surat terbaru yang dapat diakses</h2><div id="recent-letters" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-letters" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Registrasi Surat</h1><p class="text-sm text-slate-500">Surat yang dibuat akan masuk ke database bersama.</p></div>
+            <form id="letter-form" class="panel p-5 grid md:grid-cols-2 gap-3">
+              <div><label class="label">Jenis surat</label><select name="direction" class="field"><option value="masuk">Surat Masuk</option><option value="keluar">Surat Keluar</option></select></div>
+              <div><label class="label">Nomor surat</label><input name="letter_number" class="field" required></div>
+              <div><label class="label">Tanggal surat</label><input name="letter_date" type="date" class="field" required></div>
+              <div><label class="label">Target unit</label><select name="target_unit_id" id="letter-target-unit" class="field" required></select></div>
+              <div><label class="label">Pengirim / instansi asal</label><input name="sender" class="field" required></div>
+              <div><label class="label">Penerima / tujuan</label><input name="recipient" class="field" required></div>
+              <div><label class="label">Sifat</label><select name="confidentiality" class="field"><option>Biasa</option><option>Penting</option><option>Rahasia</option><option>Sangat Rahasia</option></select></div>
+              <div><label class="label">Klasifikasi</label><select name="classification" class="field"><option>Undangan</option><option>Nota Dinas</option><option>Surat Edaran</option><option>Permohonan</option><option>Laporan</option><option>Instruksi</option><option>Lainnya</option></select></div>
+              <div class="md:col-span-2"><label class="label">Perihal / ringkasan</label><textarea name="subject" class="field" rows="3" required></textarea></div>
+              <div class="md:col-span-2"><label class="label">Catatan awal</label><input name="initial_note" class="field"></div>
+              <div class="md:col-span-2 flex justify-end"><button class="btn btn-primary" type="submit">Simpan surat dan buat kode tracking</button></div>
+            </form>
+            <div class="panel p-4"><div class="flex flex-wrap justify-between gap-2 mb-3"><h2 class="font-bold">Register surat</h2><input id="letter-search" class="field max-w-sm" placeholder="Cari nomor, perihal, kode tracking"></div><div id="letters-table" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-tracking" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Tracking Surat</h1><p class="text-sm text-slate-500 mb-3">Pencarian hanya menampilkan surat yang memang boleh diakses akun ini.</p><div class="flex gap-2"><input id="tracking-search" class="field" placeholder="Kode tracking atau nomor surat"><button id="tracking-search-btn" class="btn btn-primary">Cari</button></div></div>
+            <div id="tracking-result" class="panel p-5 hidden"></div>
+          </section>
+
+          <section id="view-dispositions" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Disposisi Digital</h1><p class="text-sm text-slate-500">Teruskan surat ke unit tujuan; anggota unit tujuan mendapat notifikasi.</p></div>
+            <form id="disposition-form" class="panel p-5 grid md:grid-cols-2 gap-3">
+              <div class="md:col-span-2"><label class="label">Surat</label><select name="letter_id" id="disposition-letter" class="field" required></select></div>
+              <div><label class="label">Unit tujuan</label><select name="to_unit_id" id="disposition-unit" class="field" required></select></div>
+              <div><label class="label">Batas waktu</label><input name="due_date" type="date" class="field"></div>
+              <div class="md:col-span-2"><label class="label">Instruksi disposisi</label><textarea name="instruction" class="field" rows="3" required></textarea></div>
+              <div class="md:col-span-2 flex justify-end"><button class="btn btn-primary">Kirim disposisi</button></div>
+            </form>
+            <div class="panel p-4"><h2 class="font-bold mb-3">Riwayat disposisi</h2><div id="dispositions-table" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-tasks" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Monitoring Tugas</h1><p class="text-sm text-slate-500">Tugas dapat ditugaskan kepada anggota aktif dalam unit yang sama.</p></div>
+            <form id="task-form" class="panel p-5 grid md:grid-cols-2 gap-3">
+              <div class="md:col-span-2"><label class="label">Nama tugas</label><input name="title" class="field" required></div>
+              <div><label class="label">Ditugaskan kepada</label><select name="assigned_to" id="task-assignee" class="field" required></select></div>
+              <div><label class="label">Tenggat</label><input name="due_date" type="date" class="field"></div>
+              <div><label class="label">Prioritas</label><select name="priority" class="field"><option>Normal</option><option>Tinggi</option><option>Urgent</option></select></div>
+              <div><label class="label">Terkait surat (opsional)</label><select name="letter_id" id="task-letter" class="field"><option value="">Tidak terkait surat</option></select></div>
+              <div class="md:col-span-2"><label class="label">Deskripsi</label><textarea name="description" class="field" rows="2"></textarea></div>
+              <div class="md:col-span-2 flex justify-end"><button class="btn btn-primary">Buat tugas</button></div>
+            </form>
+            <div class="panel p-4"><h2 class="font-bold mb-3">Daftar tugas</h2><div id="tasks-table" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-archive" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Arsip Digital</h1><p class="text-sm text-slate-500">Lampiran disimpan di private bucket. Unduhan memakai signed URL sementara.</p></div>
+            <form id="upload-form" class="panel p-5 grid md:grid-cols-2 gap-3"><div><label class="label">Surat</label><select name="letter_id" id="archive-letter" class="field" required></select></div><div><label class="label">File (maksimum 10 MB untuk pengujian)</label><input name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" class="field" required></div><div class="md:col-span-2 flex justify-end"><button class="btn btn-primary">Upload arsip</button></div></form>
+            <div class="panel p-4"><h2 class="font-bold mb-3">Dokumen yang dapat diakses</h2><div id="documents-table" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-reports" class="app-view hidden space-y-4">
+            <div class="panel p-5"><h1 class="text-xl font-extrabold">Laporan</h1><p class="text-sm text-slate-500">Rekap dihitung dari baris data yang diberikan database berdasarkan RLS.</p><button id="export-csv" class="btn btn-primary mt-3">Export register CSV</button></div>
+            <div id="report-summary" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div><div class="panel p-4"><h2 class="font-bold mb-3">Rekap per unit yang terlihat</h2><div id="unit-report" class="overflow-x-auto"></div></div>
+          </section>
+
+          <section id="view-notifications" class="app-view hidden space-y-4"><div class="panel p-5"><h1 class="text-xl font-extrabold">Notifikasi</h1><p class="text-sm text-slate-500">Pemberitahuan disposisi dan penugasan.</p></div><div id="notifications-list" class="panel p-4 space-y-2"></div></section>
+
+          <section id="view-users" class="app-view hidden space-y-4"><div class="panel p-5"><h1 class="text-xl font-extrabold">Manajemen Akun</h1><p class="text-sm text-slate-500">Hanya admin pusat yang dapat menyetujui pendaftaran dan mengatur peran operasional.</p></div><div class="panel p-4"><h2 class="font-bold mb-3">Pendaftaran menunggu persetujuan</h2><div id="pending-users" class="overflow-x-auto"></div></div><div class="panel p-4"><h2 class="font-bold mb-3">Akun aktif</h2><div id="active-users" class="overflow-x-auto"></div></div></section>
+        </div>
+      </div>
+    </section>
+    <div id="toast" class="fixed bottom-4 right-4 max-w-sm bg-slate-900 text-white rounded-xl px-4 py-3 shadow-xl text-sm hidden" role="status"></div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body></html>
