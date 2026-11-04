@@ -1,902 +1,1384 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full bg-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Surat & Sistem Tracking Persuratan Dinas</title>
-    <!-- Tailwind CSS -->
+    <title>Sistem Informasi Manajemen Surat & Disposisi Elektronik (E-Surat)</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        gov: {
-                            dark: '#0f172a',
-                            navy: '#1e293b',
-                            primary: '#1d4ed8',
-                            accent: '#d97706',
-                            light: '#f8fafc',
-                            card: '#ffffff'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        'gov-navy': '#0f172a',
+                        'gov-navy-light': '#1e293b',
+                        'gov-blue': '#1e3a8a',
+                        'gov-gold': '#d97706',
+                        'gov-gold-light': '#f59e0b',
+                        'gov-slate': '#f8fafc'
                     }
                 }
             }
         }
     </script>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; color: black; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        .print-only { display: none; }
+
+        /* Print Specific Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-disposition, #printable-disposition * {
+                visibility: visible;
+            }
+            #printable-disposition {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 15px;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="h-full flex flex-col antialiased text-slate-800">
 
-    <!-- Header / Navbar -->
-    <header class="bg-gov-dark text-white shadow-lg no-print">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-amber-600 text-white p-2.5 rounded-lg flex items-center justify-center font-bold text-xl shadow">
-                    <i class="fa-solid fa-landmark"></i>
+    <!-- TOP OFFICIAL HEADER (KOP UTAMA) -->
+    <header class="bg-gov-navy text-white shadow-md border-b-4 border-gov-gold no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- Kop Logo & Title -->
+            <div class="flex items-center space-x-4">
+                <div class="bg-white/10 p-2.5 rounded-lg border border-amber-400/30 flex items-center justify-center shadow-inner">
+                    <!-- Government Garuda / Shield Emblem SVG -->
+                    <svg class="w-10 h-10 text-amber-400 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-3zm0 4.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5zm0 13c-2.33 0-4.32-1.45-5.12-3.5h10.24c-.8 2.05-2.79 3.5-5.12 3.5z"/>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-wide uppercase text-amber-400">Sistem Informasi Persuratan Dinas</h1>
-                    <p class="text-xs text-slate-300">Aplikasi Administrasi & Tracking E-Surat Pemerintah</p>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-lg md:text-xl font-bold tracking-tight text-white">E-SURAT PROVINSI</h1>
+                        <span class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded border border-amber-500/40 font-mono">v3.2 SPBE</span>
+                    </div>
+                    <p class="text-xs text-slate-300 font-medium">Sistem Informasi Manajemen Persuratan & Tata Kelola Disposisi Dinas</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-right hidden md:block">
-                    <p class="text-xs font-semibold text-slate-200" id="current-user">Petugas Administrasi / Pengelola Surat</p>
-                    <p class="text-[10px] text-amber-400" id="live-datetime"></p>
+
+            <!-- Status Indicator & User Profile -->
+            <div class="flex items-center space-x-6 text-xs sm:text-sm">
+                <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+                    <span class="relative flex h-2.5 w-2.5">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-slate-300 font-medium">Server SPBE: <strong class="text-emerald-400">Aktif & Terintegrasi</strong></span>
                 </div>
-                <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
-                    <i class="fa-solid fa-user-shield text-slate-300 text-sm"></i>
+
+                <div class="flex items-center space-x-3 bg-white/5 pl-3 pr-4 py-1.5 rounded-lg border border-white/10">
+                    <div class="w-8 h-8 rounded-full bg-gov-gold text-slate-900 font-bold flex items-center justify-center text-xs shadow">
+                        AD
+                    </div>
+                    <div class="text-left">
+                        <div class="text-xs font-semibold text-white">Drs. H. Ahmad Wijaya, M.Si</div>
+                        <div class="text-[10px] text-amber-300">NIP. 19780412 200312 1 004</div>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Navigation Bar -->
-    <nav class="bg-slate-800 text-slate-200 shadow-md no-print border-b border-slate-700">
-        <div class="container mx-auto px-4 flex flex-wrap space-x-1 md:space-x-4">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-3 text-sm font-medium flex items-center space-x-2 border-b-2 border-amber-500 text-amber-400 hover:bg-slate-700 transition">
-                <i class="fa-solid fa-chart-pie"></i>
-                <span>Dashboard</span>
-            </button>
-            <button onclick="switchTab('input')" id="nav-input" class="nav-btn px-4 py-3 text-sm font-medium flex items-center space-x-2 border-b-2 border-transparent text-slate-300 hover:bg-slate-700 hover:text-white transition">
-                <i class="fa-solid fa-file-circle-plus"></i>
-                <span>Input Surat Masuk/Keluar</span>
-            </button>
-            <button onclick="switchTab('tracking')" id="nav-tracking" class="nav-btn px-4 py-3 text-sm font-medium flex items-center space-x-2 border-b-2 border-transparent text-slate-300 hover:bg-slate-700 hover:text-white transition">
-                <i class="fa-solid fa-magnifying-glass-location"></i>
-                <span>Tracking Surat</span>
-            </button>
-            <button onclick="switchTab('arsip')" id="nav-arsip" class="nav-btn px-4 py-3 text-sm font-medium flex items-center space-x-2 border-b-2 border-transparent text-slate-300 hover:bg-slate-700 hover:text-white transition">
-                <i class="fa-solid fa-box-archive"></i>
-                <span>Daftar & Agenda Surat</span>
-            </button>
-        </div>
-    </nav>
+    <!-- MAIN APP WRAPPER -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex-shrink-0 hidden md:flex flex-col justify-between border-r border-slate-800 no-print">
+            <div class="p-4 space-y-6">
+                <!-- Navigation Menu Group -->
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 px-3">Menu Utama</p>
+                    <nav class="space-y-1">
+                        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-gov-gold text-slate-950 font-semibold shadow">
+                            <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                            <span>Dashboard Utama</span>
+                        </button>
 
-    <!-- Content Area -->
-    <main class="container mx-auto px-4 py-6 flex-grow no-print">
+                        <button onclick="switchTab('input')" id="nav-input" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                            <i class="fa-solid fa-file-circle-plus w-5 text-center"></i>
+                            <span>Input Surat Baru</span>
+                        </button>
 
-        <!-- TAB 1: DASHBOARD -->
-        <section id="tab-dashboard" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Surat Masuk</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-masuk">0</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-inbox"></i>
-                    </div>
+                        <button onclick="switchTab('tracking')" id="nav-tracking" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                            <i class="fa-solid fa-route w-5 text-center"></i>
+                            <span>Lacak Status Surat</span>
+                        </button>
+
+                        <button onclick="switchTab('register')" id="nav-register" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                            <i class="fa-solid fa-box-archive w-5 text-center"></i>
+                            <span>Register & Arsip Surat</span>
+                        </button>
+
+                        <button onclick="switchTab('disposisi')" id="nav-disposisi" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                            <i class="fa-solid fa-print w-5 text-center"></i>
+                            <span>Cetak Disposisi</span>
+                        </button>
+                    </nav>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Surat Keluar</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-keluar">0</h3>
+                <!-- Quick Info Box -->
+                <div class="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60 text-xs space-y-2">
+                    <div class="flex items-center text-amber-400 font-semibold">
+                        <i class="fa-solid fa-circle-info mr-2"></i> Petunjuk Layanan
                     </div>
-                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Dalam Disposisi / Proses</p>
-                        <h3 class="text-2xl font-bold text-amber-600 mt-1" id="stat-proses">0</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-spinner"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Selesai / Diarsipkan</p>
-                        <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="stat-selesai">0</h3>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Surat masuk kategori <span class="text-amber-300 font-medium">Sangat Rahasia</span> harus langsung diteruskan ke Sekretariat Kepala Dinas.
+                    </p>
                 </div>
             </div>
 
-            <!-- Quick Action & Recent Items -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Recent Registrations -->
-                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                    <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                        <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
-                            Persuratan Terbaru Terregistrasi
-                        </h2>
-                        <button onclick="switchTab('arsip')" class="text-xs text-blue-600 font-semibold hover:underline">Lihat Semua &rarr;</button>
+            <!-- Footer Info -->
+            <div class="p-4 border-t border-slate-800 text-[11px] text-slate-500 text-center">
+                &copy; 2026 Diskominfotik Prov. All Rights Reserved.
+            </div>
+        </aside>
+
+        <!-- MOBILE BOTTOM NAV BAR -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-50 flex justify-around p-2 no-print text-xs text-slate-400">
+            <button onclick="switchTab('dashboard')" class="flex flex-col items-center py-1 px-2 focus:text-amber-400">
+                <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
+                <span>Beranda</span>
+            </button>
+            <button onclick="switchTab('input')" class="flex flex-col items-center py-1 px-2 focus:text-amber-400">
+                <i class="fa-solid fa-file-circle-plus text-base mb-0.5"></i>
+                <span>Input</span>
+            </button>
+            <button onclick="switchTab('tracking')" class="flex flex-col items-center py-1 px-2 focus:text-amber-400">
+                <i class="fa-solid fa-route text-base mb-0.5"></i>
+                <span>Lacak</span>
+            </button>
+            <button onclick="switchTab('register')" class="flex flex-col items-center py-1 px-2 focus:text-amber-400">
+                <i class="fa-solid fa-box-archive text-base mb-0.5"></i>
+                <span>Arsip</span>
+            </button>
+        </div>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Page Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Ringkasan Eksekutif Persuratan</h2>
+                        <p class="text-sm text-slate-500">Statistik real-time alur masuk & keluar surat dinas hari ini.</p>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600">
-                            <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="seedSampleData()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center">
+                            <i class="fa-solid fa-rotate mr-2 text-slate-500"></i> Reset / Muat Sampel Data
+                        </button>
+                        <button onclick="switchTab('input')" class="px-4 py-2 bg-gov-blue hover:bg-blue-900 text-white text-xs font-semibold rounded-lg shadow transition flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Surat Baru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <!-- Metric 1 -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Surat Terdaftar</p>
+                                <h3 id="stat-total" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                                <i class="fa-solid fa-folder-closed text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3 flex items-center">
+                            <span class="text-emerald-600 font-semibold mr-1"><i class="fa-solid fa-arrow-up"></i> +12%</span> dibanding bulan lalu
+                        </p>
+                    </div>
+
+                    <!-- Metric 2 -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Surat Masuk</p>
+                                <h3 id="stat-masuk" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                                <i class="fa-solid fa-inbox text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3">Dokumen dari instansi luar</p>
+                    </div>
+
+                    <!-- Metric 3 -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Surat Keluar</p>
+                                <h3 id="stat-keluar" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <i class="fa-solid fa-paper-plane text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3">Surat diterbitkan internal</p>
+                    </div>
+
+                    <!-- Metric 4 -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Perlu Disposisi</p>
+                                <h3 id="stat-proses" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+                            </div>
+                            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                                <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-600 font-medium mt-3">Membutuhkan tindakan cepat</p>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Bar Chart -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-base font-bold text-slate-900 mb-4">Volume Surat per Bulan (2026)</h3>
+                        <div class="h-64 relative">
+                            <canvas id="chartSuratBulan"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Pie Chart -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <h3 class="text-base font-bold text-slate-900 mb-2">Distribusi Sifat Surat</h3>
+                        <div class="h-56 relative flex items-center justify-center">
+                            <canvas id="chartSifatSurat"></canvas>
+                        </div>
+                        <div class="text-center text-xs text-slate-400 mt-2">Berdasarkan klasifikasi kerahasiaan naskah</div>
+                    </div>
+                </div>
+
+                <!-- Recent Mail List -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <h3 class="text-base font-bold text-slate-900">Surat Terbaru Dalam Disposisi</h3>
+                        <button onclick="switchTab('register')" class="text-xs font-semibold text-gov-blue hover:underline">Lihat Semua Data &rarr;</button>
+                    </div>
+                    <div class="divide-y divide-slate-100 overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold">
                                 <tr>
-                                    <th class="py-2.5 px-3">No. Agenda</th>
-                                    <th class="py-2.5 px-3">Tgl Surat</th>
-                                    <th class="py-2.5 px-3">Pengirim / Tujuan</th>
-                                    <th class="py-2.5 px-3">Perihal</th>
-                                    <th class="py-2.5 px-3">Status Tracking</th>
+                                    <th class="p-3.5">Kode / No. Surat</th>
+                                    <th class="p-3.5">Asal / Instansi</th>
+                                    <th class="p-3.5">Perihal</th>
+                                    <th class="p-3.5">Sifat</th>
+                                    <th class="p-3.5">Status</th>
+                                    <th class="p-3.5 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="recent-table-body">
-                                <tr>
-                                    <td colspan="5" class="text-center py-6 text-slate-400">Belum ada data surat. Silakan input surat baru.</td>
-                                </tr>
+                            <tbody id="dashboard-recent-table" class="divide-y divide-slate-100">
+                                <!-- Dynamic Recent Items JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </section>
 
-                <!-- Quick Tracking Form -->
-                <div class="bg-slate-900 text-white rounded-xl shadow-sm p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-lg bg-amber-500 text-slate-900 flex items-center justify-center text-lg font-bold">
-                                <i class="fa-solid fa-radar"></i>
+            <!-- TAB 2: INPUT SURAT MASUK & KELUAR -->
+            <section id="tab-input" class="tab-content hidden max-w-4xl mx-auto space-y-6">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="border-b border-slate-200 pb-4 mb-6">
+                        <h2 class="text-xl font-bold text-slate-900">Formulir Pendaftaran & Input Surat Dinas</h2>
+                        <p class="text-sm text-slate-500 mt-1">Masukkan rincian berkas naskah dinas untuk dicatat dalam agenda resmi instansi.</p>
+                    </div>
+
+                    <form id="form-surat" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                        
+                        <!-- Jenis Surat Radio Switcher -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jenis Surat <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="jenis" value="masuk" checked class="peer sr-only" onchange="toggleJenisForm('masuk')">
+                                    <div class="p-3.5 rounded-xl border border-slate-300 peer-checked:border-gov-blue peer-checked:bg-blue-50/50 peer-checked:text-gov-blue flex items-center justify-center space-x-2 text-sm font-semibold transition">
+                                        <i class="fa-solid fa-circle-down"></i>
+                                        <span>Surat Masuk (Eksternal)</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="jenis" value="keluar" class="peer sr-only" onchange="toggleJenisForm('keluar')">
+                                    <div class="p-3.5 rounded-xl border border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 peer-checked:text-indigo-600 flex items-center justify-center space-x-2 text-sm font-semibold transition">
+                                        <i class="fa-solid fa-circle-up"></i>
+                                        <span>Surat Keluar (Internal)</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Form Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            
+                            <!-- Nomor Surat -->
+                            <div>
+                                <label for="nomorSurat" class="block text-xs font-semibold text-slate-700 mb-1">Nomor Official Surat <span class="text-red-500">*</span></label>
+                                <input type="text" id="nomorSurat" required placeholder="Contoh: 005/123/DISKOMINFO/2026" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                            </div>
+
+                            <!-- Tanggal Surat -->
+                            <div>
+                                <label for="tanggalSurat" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Lembar Surat <span class="text-red-500">*</span></label>
+                                <input type="date" id="tanggalSurat" required class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                            </div>
+
+                            <!-- Pengirim / Instansi Asal -->
+                            <div id="field-pengirim-container">
+                                <label for="pengirim" class="block text-xs font-semibold text-slate-700 mb-1">Pengirim / Instansi Asal <span class="text-red-500">*</span></label>
+                                <input type="text" id="pengirim" required placeholder="Contoh: Kementerian Dalam Negeri RI" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                            </div>
+
+                            <!-- Tujuan / Penerima -->
+                            <div id="field-penerima-container">
+                                <label for="penerima" class="block text-xs font-semibold text-slate-700 mb-1">Tujuan / Penerima <span class="text-red-500">*</span></label>
+                                <input type="text" id="penerima" required value="Kepala Dinas Komunikasi & Informatika" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                            </div>
+
+                            <!-- Sifat Surat -->
+                            <div>
+                                <label for="sifat" class="block text-xs font-semibold text-slate-700 mb-1">Sifat Kerahasiaan Surat <span class="text-red-500">*</span></label>
+                                <select id="sifat" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                                    <option value="Biasa">Biasa / Terbuka</option>
+                                    <option value="Penting" selected>Penting</option>
+                                    <option value="Rahasia">Rahasia</option>
+                                    <option value="Sangat Rahasia">Sangat Rahasia</option>
+                                </select>
+                            </div>
+
+                            <!-- Klasifikasi -->
+                            <div>
+                                <label for="klasifikasi" class="block text-xs font-semibold text-slate-700 mb-1">Klasifikasi Naskah Dinas <span class="text-red-500">*</span></label>
+                                <select id="klasifikasi" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                                    <option value="Undangan">Undangan Rapat / Acara</option>
+                                    <option value="Nota Dinas">Nota Dinas Internal</option>
+                                    <option value="Surat Edaran">Surat Edaran (SE)</option>
+                                    <option value="Permohonan">Permohonan / Pengajuan</option>
+                                    <option value="Laporan">Laporan Kinerja / Keuangan</option>
+                                    <option value="Instruksi">Instruksi Gubernur / Kadis</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Perihal Surat -->
+                        <div>
+                            <label for="perihal" class="block text-xs font-semibold text-slate-700 mb-1">Perihal / Ringkasan Isi Surat <span class="text-red-500">*</span></label>
+                            <textarea id="perihal" rows="3" required placeholder="Tuliskan pokok isi atau perihal surat secara singkat dan jelas..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition"></textarea>
+                        </div>
+
+                        <!-- Target Disposisi / Unit Tujuan -->
+                        <div>
+                            <label for="targetUnit" class="block text-xs font-semibold text-slate-700 mb-1">Diteruskan Kepada (Unit / Bidang Tujuan) <span class="text-red-500">*</span></label>
+                            <select id="targetUnit" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                                <option value="Sekretariat Utama">Sekretariat Utama</option>
+                                <option value="Bidang Aplikasi Informatika">Bidang Aplikasi Informatika (APTIKA)</option>
+                                <option value="Bidang Informasi & Komunikasi Publik">Bidang Informasi & Komunikasi Publik (IKP)</option>
+                                <option value="Bidang Persandian & Keamanan Informasi">Bidang Persandian & Keamanan Informasi</option>
+                                <option value="Subbagian Keuangan & Kepegawaian">Subbagian Keuangan & Kepegawaian</option>
+                            </select>
+                        </div>
+
+                        <!-- Catatan / Petunjuk Awal -->
+                        <div>
+                            <label for="catatanAwal" class="block text-xs font-semibold text-slate-700 mb-1">Catatan Tambahan Petugas Agenda (Opsional)</label>
+                            <input type="text" id="catatanAwal" placeholder="Contoh: Berkas fisik ada di map merah Rak 02" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue focus:border-gov-blue outline-none transition">
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('form-surat').reset()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                                <i class="fa-solid fa-eraser mr-1"></i> Bersihkan Form
+                            </button>
+                            <button type="submit" class="px-6 py-2.5 bg-gov-blue hover:bg-blue-900 text-white text-xs font-bold rounded-lg shadow-md transition flex items-center">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i> Simpan & Terbitkan Kode Tracking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 3: TRACKING & LACAK STATUS SURAT -->
+            <section id="tab-tracking" class="tab-content hidden max-w-4xl mx-auto space-y-6">
+                <!-- Search Tracker Bar -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4">
+                    <div class="inline-flex p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                        <i class="fa-solid fa-magnifying-glass-location text-2xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900">Lacak Alur Disposisi Surat Dinas</h2>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">Masukkan Nomor Tracking unik atau Nomor Surat Resmi untuk melihat riwayat proses perjalanan surat.</p>
+                    
+                    <div class="max-w-md mx-auto flex items-center space-x-2 pt-2">
+                        <input type="text" id="input-search-tracker" placeholder="Contoh: TRK-202611-001 atau 005/123..." class="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-gov-blue outline-none shadow-sm">
+                        <button onclick="executeTrackingSearch()" class="px-5 py-3 bg-gov-blue hover:bg-blue-900 text-white font-bold text-xs rounded-xl shadow transition">
+                            Lacak Surat
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tracker Output Container -->
+                <div id="tracker-result-container" class="hidden space-y-6">
+                    <!-- Letter Meta Info Card -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span id="track-jenis-badge" class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">Surat Masuk</span>
+                                <span id="track-sifat-badge" class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">Penting</span>
+                                <span id="track-id" class="font-mono text-xs font-bold text-slate-500">TRK-0000</span>
+                            </div>
+                            <h3 id="track-perihal" class="text-base font-bold text-slate-900">Perihal Surat Disini</h3>
+                            <p class="text-xs text-slate-500 mt-1">Nomor Surat: <strong id="track-nomor" class="text-slate-800">000/000</strong> &bull; Dari: <strong id="track-pengirim" class="text-slate-800">-</strong></p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="btn-print-from-track" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 transition flex items-center">
+                                <i class="fa-solid fa-print mr-2"></i> Print Disposisi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visual Timeline Stepper -->
+                    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+                        <h4 class="text-sm font-bold text-slate-900 mb-6">Status Perkembangan Disposisi</h4>
+                        
+                        <div id="timeline-stepper-wrapper" class="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-8">
+                            <!-- Timeline steps will be dynamically injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Update Status Panel (Admin tool) -->
+                    <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2.5 bg-amber-500/20 text-amber-400 rounded-lg">
+                                <i class="fa-solid fa-pen-to-square text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-white text-base">Cek Status Tracking</h3>
-                                <p class="text-xs text-slate-400">Masukkan Nomor Agenda atau Nomor Surat</p>
+                                <h5 class="text-sm font-bold">Perbarui Status Disposisi</h5>
+                                <p class="text-xs text-slate-400">Ubah tahapan posisi surat secara langsung dalam sistem.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <select id="quick-status-select" class="px-3 py-2 bg-slate-800 border border-slate-700 text-white text-xs rounded-lg outline-none focus:border-amber-400">
+                                <option value="diterima">1. Teragenda di Sekretariat</option>
+                                <option value="disposisi">2. Dalam Disposisi Sekda / Kadis</option>
+                                <option value="proses">3. Tindak Lanjut Bidang</option>
+                                <option value="verifikasi">4. Verifikasi & Paraf Akhir</option>
+                                <option value="selesai">5. Selesai & Diarsipkan</option>
+                            </select>
+                            <button onclick="updateCurrentTrackStatus()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg transition whitespace-nowrap">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state when not searched -->
+                <div id="tracker-empty-state" class="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-400">
+                    <i class="fa-solid fa-route text-4xl mb-3 text-slate-300"></i>
+                    <p class="text-sm font-medium text-slate-600">Belum ada surat yang ditelusuri</p>
+                    <p class="text-xs mt-1">Gunakan kotak pencarian di atas untuk memeriksa posisi surat.</p>
+                </div>
+            </section>
+
+            <!-- TAB 4: REGISTER & ARSIP SURAT -->
+            <section id="tab-register" class="tab-content hidden space-y-6">
+                <!-- Header & Filters -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Buku Register & Arsip Surat Dinas</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Daftar inventarisasi seluruh surat masuk dan keluar secara rinci.</p>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Category Filter Tabs -->
+                        <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                            <button onclick="filterRegister('all')" id="filter-btn-all" class="px-3 py-1.5 rounded-lg bg-white shadow text-slate-800">Semua</button>
+                            <button onclick="filterRegister('masuk')" id="filter-btn-masuk" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Surat Masuk</button>
+                            <button onclick="filterRegister('keluar')" id="filter-btn-keluar" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Surat Keluar</button>
+                            <button onclick="filterRegister('proses')" id="filter-btn-proses" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Dalam Proses</button>
+                        </div>
+
+                        <!-- Realtime Search -->
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="search-register-input" oninput="renderRegisterTable()" placeholder="Cari perihal, nomor, pengirim..." class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-gov-blue outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Register Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900 text-white font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-4">Kode / No. Agenda</th>
+                                    <th class="p-4">Tgl & Jenis</th>
+                                    <th class="p-4">Pengirim / Perihal</th>
+                                    <th class="p-4">Sifat & Unit</th>
+                                    <th class="p-4">Status Disposisi</th>
+                                    <th class="p-4 text-center">Aksi / Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="register-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic JS Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table Footer Pagination Info -->
+                    <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+                        <div>
+                            Menampilkan <span id="register-count" class="font-bold text-slate-800">0</span> berkas surat terdaftar.
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="text-[11px] text-slate-400">Sistem E-Surat Terkoneksi Database Daerah</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: CETAK LEMBAR DISPOSISI -->
+            <section id="tab-disposisi" class="tab-content hidden max-w-4xl mx-auto space-y-6">
+                <!-- Action Controls (Non-printable) -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4 no-print">
+                    <div class="flex items-center space-x-3">
+                        <label for="disposisi-select-surat" class="text-xs font-bold text-slate-700">Pilih Surat Untuk Dicetak:</label>
+                        <select id="disposisi-select-surat" onchange="loadDispositionPreview(this.value)" class="px-3 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-gov-blue">
+                            <!-- Select Options Injected dynamically -->
+                        </select>
+                    </div>
+                    <button onclick="window.print()" class="px-5 py-2.5 bg-gov-gold hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center">
+                        <i class="fa-solid fa-print mr-2"></i> Cetak Ke Printer / PDF
+                    </button>
+                </div>
+
+                <!-- OFFICIAL PRINTABLE DISPOSITION SHEET (A4 Standard Format) -->
+                <div id="printable-disposition" class="bg-white p-8 sm:p-10 rounded-2xl shadow-md border border-slate-300 text-slate-900 leading-normal">
+                    
+                    <!-- KOP SURAT RESMI INSTANSI -->
+                    <div class="border-b-4 border-double border-slate-900 pb-4 mb-5 text-center relative">
+                        <div class="flex items-center justify-center space-x-4 mb-2">
+                            <!-- Logo Garuda Official Black and White for Printing -->
+                            <div class="w-14 h-14 border border-slate-800 p-2 rounded flex items-center justify-center">
+                                <svg class="w-10 h-10 text-slate-900 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-3zm0 4.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5zm0 13c-2.33 0-4.32-1.45-5.12-3.5h10.24c-.8 2.05-2.79 3.5-5.12 3.5z"/>
+                                </svg>
+                            </div>
+                            <div class="text-center">
+                                <h2 class="text-base font-extrabold tracking-wider uppercase">PEMERINTAH PROVINSI JAKARTA</h2>
+                                <h1 class="text-lg font-black tracking-wide uppercase">DINAS KOMUNIKASI, INFORMATIKA DAN STATISTIK</h1>
+                                <p class="text-[11px] font-medium text-slate-600">Jalan Merdeka Selatan No. 8-9 Kompleks Balai Kota Telp. (021) 3822222</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-center">
+                            <span class="inline-block bg-slate-900 text-white font-bold text-xs uppercase tracking-widest px-6 py-1 rounded">LEMBAR DISPOSISI</span>
+                        </div>
+                    </div>
+
+                    <!-- Meta Data Grid Table -->
+                    <table class="w-full border-collapse border border-slate-900 text-xs mb-4">
+                        <tbody>
+                            <tr>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50 w-1/6">Surat Dari</td>
+                                <td id="disp-pengirim" class="border border-slate-900 p-2 w-2/6">-</td>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50 w-1/6">Diterima Tgl</td>
+                                <td id="disp-tgl-diterima" class="border border-slate-900 p-2 w-2/6">-</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50">No. Surat</td>
+                                <td id="disp-no-surat" class="border border-slate-900 p-2 font-mono font-semibold">-</td>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50">No. Agenda/Track</td>
+                                <td id="disp-no-agenda" class="border border-slate-900 p-2 font-mono font-bold">-</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50">Tgl. Surat</td>
+                                <td id="disp-tgl-surat" class="border border-slate-900 p-2">-</td>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50">Sifat Surat</td>
+                                <td id="disp-sifat" class="border border-slate-900 p-2 font-bold text-amber-800">-</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-900 p-2 font-bold bg-slate-50">Hal / Perihal</td>
+                                <td id="disp-perihal" colspan="3" class="border border-slate-900 p-2 font-semibold leading-relaxed">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Disposisi Target Grid -->
+                    <div class="grid grid-cols-2 gap-4 border border-slate-900 p-3 mb-4 text-xs">
+                        <div>
+                            <p class="font-bold border-b border-slate-900 pb-1 mb-2 uppercase tracking-wider">Diteruskan Kepada Yth:</p>
+                            <div class="space-y-1.5">
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" checked disabled class="accent-slate-900">
+                                    <span>Sekretaris Dinas</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="chk-aptika" disabled class="accent-slate-900">
+                                    <span>Kepala Bidang Aplikasi Informatika</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="chk-ikp" disabled class="accent-slate-900">
+                                    <span>Kepala Bidang Informasi Komunikasi Publik</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="chk-sandi" disabled class="accent-slate-900">
+                                    <span>Kepala Bidang Persandian & Keamanan</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="chk-keuangan" disabled class="accent-slate-900">
+                                    <span>Kasubag Keuangan & Kepegawaian</span>
+                                </label>
                             </div>
                         </div>
 
-                        <div class="space-y-3">
-                            <input type="text" id="quick-track-input" placeholder="Contoh: SR-2026/001" class="w-full px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
-                            <button onclick="quickTrack()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-lg transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-magnifying-glass"></i> Cari Status Surat
-                            </button>
+                        <div>
+                            <p class="font-bold border-b border-slate-900 pb-1 mb-2 uppercase tracking-wider">Petunjuk / Instruksi:</p>
+                            <div class="grid grid-cols-2 gap-1 text-[11px]">
+                                <div>[&#10003;] Tanggapi / Laporkan</div>
+                                <div>[ ] Proses Lanjut</div>
+                                <div>[ ] Pelajari / Telaah</div>
+                                <div>[ ] Siapkan Bahan</div>
+                                <div>[ ] Koordinasikan</div>
+                                <div>[ ] Diarsipkan</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-                        <p class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-amber-400"></i> Sistem Persuratan Terintegrasi Standar SPBE</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 2: INPUT SURAT -->
-        <section id="tab-input" class="tab-content hidden">
-            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
-                    <h2 class="font-bold text-lg flex items-center gap-2">
-                        <i class="fa-solid fa-file-pen text-amber-400"></i>
-                        Formulir Registrasi Surat Masuk / Surat Keluar
-                    </h2>
-                    <span class="text-xs bg-slate-700 px-3 py-1 rounded-full text-slate-300">Format Dinas Resmi</span>
-                </div>
-
-                <form id="form-surat" onsubmit="saveSurat(event)" class="p-6 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Jenis Surat -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Jenis Registrasi <span class="text-red-500">*</span></label>
-                            <select id="jenis_surat" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="Masuk">Surat Masuk</option>
-                                <option value="Keluar">Surat Keluar</option>
-                            </select>
-                        </div>
-
-                        <!-- No Agenda (Auto-generated or Manual) -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Nomor Agenda (Auto/System) <span class="text-red-500">*</span></label>
-                            <input type="text" id="no_agenda" required readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-600 font-mono font-bold">
-                        </div>
-
-                        <!-- Nomor Surat Official -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Nomor Surat Dinas <span class="text-red-500">*</span></label>
-                            <input type="text" id="no_surat" placeholder="Contoh: 005/123/DISDIIK/2026" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        </div>
-
-                        <!-- Tanggal Surat & Tanggal Diterima -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Tanggal Surat <span class="text-red-500">*</span></label>
-                            <input type="date" id="tgl_surat" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        </div>
-
-                        <!-- Pengirim / Instansi Asal -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Pengirim / Instansi Asal <span class="text-red-500">*</span></label>
-                            <input type="text" id="pengirim" placeholder="Contoh: Kementerian Dalam Negeri / PT. Maju Bersama" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        </div>
-
-                        <!-- Penerima / Tujuan -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Tujuan / Kepada Yth. <span class="text-red-500">*</span></label>
-                            <input type="text" id="tujuan" placeholder="Contoh: Kepala Dinas / Kabid Keuangan" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        </div>
-
-                        <!-- Sifat Surat -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Sifat Surat <span class="text-red-500">*</span></label>
-                            <select id="sifat_surat" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="Biasa">Biasa</option>
-                                <option value="Penting">Penting</option>
-                                <option value="Rahasia">Rahasia</option>
-                                <option value="Kilat/Sangat Penting">Kilat / Sangat Penting</option>
-                            </select>
-                        </div>
-
-                        <!-- Kategori Surat -->
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Kategori / Klasifikasi</label>
-                            <select id="kategori" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="Undangan">Undangan</option>
-                                <option value="Permohonan">Permohonan</option>
-                                <option value="Pemberitahuan">Pemberitahuan</option>
-                                <option value="Laporan">Laporan</option>
-                                <option value="Instruksi / Edaran">Instruksi / Edaran</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                        </div>
+                    <!-- Catatan Disposisi Box -->
+                    <div class="border border-slate-900 p-4 mb-6 text-xs min-h-[120px]">
+                        <p class="font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200 pb-1 mb-2">Isi Petunjuk Disposisi Pimpinan:</p>
+                        <p id="disp-catatan-pimpinan" class="text-sm italic font-serif leading-relaxed text-slate-900">
+                            "Mohon untuk segera ditindaklanjuti dan disiapkan dokumen teknis pendukung sebelum rapat koordinasi."
+                        </p>
                     </div>
 
-                    <!-- Perihal -->
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Perihal / Isi Ringkas Surat <span class="text-red-500">*</span></label>
-                        <textarea id="perihal" rows="3" placeholder="Tuliskan ringkasan isi atau perihal surat secara jelas..." required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                    </div>
-
-                    <!-- Status Posisi Surat Awal -->
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-2">Posisi / Status Awal Disposisi <span class="text-red-500">*</span></label>
-                        <select id="status_posisi" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="Registrasi Subbag Umum">1. Registrasi Subbag Umum / Sekretariat</option>
-                            <option value="Verifikasi Kabag / Sekretaris">2. Verifikasi Sekretaris / Kabag</option>
-                            <option value="Disposisi Pimpinan / Kepala">3. Disposisi Kepala Dinas / Pimpinan</option>
-                            <option value="Tindak Lanjut Bidang / Unit">4. Tindak Lanjut Bidang / Unit Kerja</option>
-                            <option value="Selesai & Diarsipkan">5. Selesai & Diarsipkan</option>
-                        </select>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 pt-4 border-t">
-                        <button type="button" onclick="resetForm()" class="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-100 transition">
-                            Reset
-                        </button>
-                        <button type="submit" class="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md transition flex items-center gap-2">
-                            <i class="fa-solid fa-floppy-disk"></i> Simpan Data Surat
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- TAB 3: TRACKING SURAT -->
-        <section id="tab-tracking" class="tab-content hidden space-y-6">
-            <!-- Search Control -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-3xl mx-auto text-center">
-                <h2 class="text-xl font-bold text-slate-800 mb-2">Pencarian & Real-time Tracking Disposisi Surat</h2>
-                <p class="text-xs text-slate-500 mb-6">Ketik Nomor Agenda atau Nomor Surat untuk melihat perjalanan alur disposisi fisik/digital.</p>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="track-search-input" placeholder="Masukkan Nomor Agenda (misal: SR-2026/001) atau No Surat..." class="flex-grow px-4 py-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <button onclick="executeTracking()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-magnifying-glass"></i> Cari Surat
-                    </button>
-                </div>
-            </div>
-
-            <!-- Result Card & Timeline View -->
-            <div id="tracking-result-container" class="max-w-4xl mx-auto hidden">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-800 text-white p-5 flex flex-wrap justify-between items-center gap-3">
-                        <div>
-                            <span id="track-badge-type" class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-amber-500 text-slate-950">Surat Masuk</span>
-                            <h3 class="text-lg font-bold mt-1" id="track-no-agenda">AGENDA: SR-2026/001</h3>
-                            <p class="text-xs text-slate-300" id="track-no-surat">No. Surat: 005/123/2026</p>
+                    <!-- Paraf Stamp & Signature Section -->
+                    <div class="flex justify-between items-end pt-4 border-t border-slate-300 text-xs">
+                        <div class="text-center font-mono text-[10px] text-slate-500">
+                            <p>Autentikasi Sistem E-Surat SPBE</p>
+                            <div class="w-20 h-20 border border-slate-300 my-1 mx-auto flex items-center justify-center p-1">
+                                <!-- QR Placeholder -->
+                                <div class="bg-slate-900 text-white w-full h-full flex items-center justify-center font-bold text-[8px] text-center">
+                                    VERIFIED SPBE E-SIGN
+                                </div>
+                            </div>
+                            <p id="disp-kode-verifikasi">TRK-202611-001</p>
                         </div>
-                        <div class="text-right">
-                            <button onclick="printLembarDisposisi()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-2">
-                                <i class="fa-solid fa-print"></i> Cetak Lembar Disposisi
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="p-6 border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        <div>
-                            <span class="text-slate-400 font-semibold block uppercase">Pengirim:</span>
-                            <span class="text-slate-800 font-bold" id="track-pengirim">-</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 font-semibold block uppercase">Tujuan / Kepada:</span>
-                            <span class="text-slate-800 font-bold" id="track-tujuan">-</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 font-semibold block uppercase">Perihal:</span>
-                            <span class="text-slate-800 font-bold" id="track-perihal">-</span>
-                        </div>
-                    </div>
-
-                    <!-- Visual Timeline -->
-                    <div class="p-6 bg-slate-50">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-6 flex items-center gap-2">
-                            <i class="fa-solid fa-route text-blue-600"></i> Alur Prosedur Disposisi & Status Terakhir
-                        </h4>
-
-                        <div class="relative border-l-2 border-slate-300 ml-4 space-y-8" id="timeline-steps">
-                            <!-- Injected dynamically via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Update Status Action inside Tracking -->
-                    <div class="p-4 bg-slate-100 border-t flex flex-wrap justify-between items-center gap-3">
-                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                            <i class="fa-solid fa-pen-to-square"></i> Update Posisi Disposisi:
-                        </div>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <select id="update-status-select" class="text-xs px-3 py-2 border rounded-lg focus:outline-none">
-                                <option value="Registrasi Subbag Umum">1. Registrasi Subbag Umum</option>
-                                <option value="Verifikasi Kabag / Sekretaris">2. Verifikasi Sekretaris</option>
-                                <option value="Disposisi Pimpinan / Kepala">3. Disposisi Kepala Dinas</option>
-                                <option value="Tindak Lanjut Bidang / Unit">4. Tindak Lanjut Bidang</option>
-                                <option value="Selesai & Diarsipkan">5. Selesai & Diarsipkan</option>
-                            </select>
-                            <button onclick="updateStatusFromTracking()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">Update Status</button>
+                        <div class="text-center w-64">
+                            <p>Jakarta, <span id="disp-tanggal-cetak">04 November 2026</span></p>
+                            <p class="font-bold mt-1">KEPALA DINAS KOMUNIKASI & INFORMATIKA</p>
+                            <div class="h-16 flex items-center justify-center italic text-slate-400">
+                                (Tanda Tangan Digital Terverifikasi)
+                            </div>
+                            <p class="font-bold underline text-sm">Drs. H. M. RAMLI, M.Si</p>
+                            <p class="text-[10px] text-slate-600">Pembina Utama Muda / IV c</p>
+                            <p class="text-[10px] text-slate-600">NIP. 19690815 199403 1 002</p>
                         </div>
                     </div>
                 </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL DETAIL SURAT -->
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform transition-all">
+            <div class="bg-gov-navy text-white px-6 py-4 flex items-center justify-between">
+                <h3 class="font-bold text-base flex items-center">
+                    <i class="fa-solid fa-file-contract mr-2 text-amber-400"></i> Detail Naskah Dinas
+                </h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-
-            <div id="tracking-empty" class="text-center py-12 text-slate-400 hidden">
-                <i class="fa-solid fa-folder-open text-4xl mb-3 text-slate-300"></i>
-                <p class="text-sm font-semibold">Data Surat Tidak Ditemukan</p>
-                <p class="text-xs">Pastikan Nomor Agenda atau Nomor Surat yang Anda masukkan sudah benar.</p>
+            <div id="modal-content-body" class="p-6 space-y-4 text-xs">
+                <!-- Dynamically populated via JS -->
             </div>
-        </section>
-
-        <!-- TAB 4: ARSIP & DAFTAR SURAT -->
-        <section id="tab-arsip" class="tab-content hidden space-y-4">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                <div class="flex flex-col md:flex-row justify-between items-md-center gap-4 mb-4 pb-3 border-b">
-                    <div>
-                        <h2 class="font-bold text-slate-800 text-lg flex items-center gap-2">
-                            <i class="fa-solid fa-table-list text-blue-600"></i>
-                            Buku Agenda & Register Persuratan
-                        </h2>
-                        <p class="text-xs text-slate-500">Kelola, cetak, dan pantau seluruh arsip surat masuk dan keluar.</p>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <select id="filter-jenis" onchange="renderArsipTable()" class="text-xs border border-slate-300 rounded-lg px-3 py-2 bg-slate-50">
-                            <option value="ALL">Semua Jenis Surat</option>
-                            <option value="Masuk">Surat Masuk Only</option>
-                            <option value="Keluar">Surat Keluar Only</option>
-                        </select>
-                        <input type="text" id="filter-search" onkeyup="renderArsipTable()" placeholder="Cari perihal / no surat / pengirim..." class="text-xs border border-slate-300 rounded-lg px-3 py-2 w-60">
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                            <tr>
-                                <th class="py-3 px-3">No. Agenda</th>
-                                <th class="py-3 px-3">Jenis</th>
-                                <th class="py-3 px-3">No. Surat</th>
-                                <th class="py-3 px-3">Tgl Surat</th>
-                                <th class="py-3 px-3">Pengirim / Tujuan</th>
-                                <th class="py-3 px-3">Perihal</th>
-                                <th class="py-3 px-3">Sifat</th>
-                                <th class="py-3 px-3">Status Posisi</th>
-                                <th class="py-3 px-3 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="arsip-table-body" class="divide-y divide-slate-100">
-                            <!-- Dynamic Content -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end">
+                <button onclick="closeDetailModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-lg">Tutup</button>
             </div>
-        </section>
-    </main>
-
-    <!-- PRINTABLE LEMBAR DISPOSISI (Only visible when printing) -->
-    <div id="print-disposisi-area" class="print-only p-8 max-w-3xl mx-auto font-serif">
-        <div class="text-center border-b-4 border-double border-black pb-4 mb-4">
-            <h2 class="text-lg font-bold uppercase tracking-widest">PEMERINTAH REPUBLIK INDONESIA</h2>
-            <h1 class="text-xl font-extrabold uppercase">DINAS PEMERINTAHAN DAERAH</h1>
-            <p class="text-xs italic">Jl. Praja Utama No. 1, Telp: (021) 555-0199 / Email: persuratan@go.id</p>
-        </div>
-
-        <h3 class="text-center font-bold text-base underline uppercase mb-6">LEMBAR DISPOSISI</h3>
-
-        <table class="w-full text-xs border-collapse border border-black mb-4">
-            <tr>
-                <td class="border border-black p-2 font-bold w-1/4">Surat Dari</td>
-                <td class="border border-black p-2 w-1/4" id="print-pengirim">-</td>
-                <td class="border border-black p-2 font-bold w-1/4">No. Agenda / Reg</td>
-                <td class="border border-black p-2 w-1/4 font-mono font-bold" id="print-no-agenda">-</td>
-            </tr>
-            <tr>
-                <td class="border border-black p-2 font-bold">No. Surat</td>
-                <td class="border border-black p-2" id="print-no-surat">-</td>
-                <td class="border border-black p-2 font-bold">Tanggal Surat</td>
-                <td class="border border-black p-2" id="print-tgl-surat">-</td>
-            </tr>
-            <tr>
-                <td class="border border-black p-2 font-bold">Sifat Surat</td>
-                <td class="border border-black p-2" id="print-sifat">-</td>
-                <td class="border border-black p-2 font-bold">Kategori</td>
-                <td class="border border-black p-2" id="print-kategori">-</td>
-            </tr>
-            <tr>
-                <td class="border border-black p-2 font-bold">Perihal</td>
-                <td colspan="3" class="border border-black p-2" id="print-perihal">-</td>
-            </tr>
-        </table>
-
-        <div class="grid grid-cols-2 gap-4 border border-black p-3 text-xs min-h-[220px]">
-            <div class="border-r border-black pr-3">
-                <p class="font-bold underline mb-2">PETUNJUK / DISPOSISI KEPADA:</p>
-                <div class="space-y-1.5">
-                    <p>[ &nbsp; ] Sekertaris Dinas</p>
-                    <p>[ &nbsp; ] Kepala Bidang Perencanaan</p>
-                    <p>[ &nbsp; ] Kepala Bidang Administrasi</p>
-                    <p>[ &nbsp; ] Kasubbag Keuangan & Aset</p>
-                    <p>[ &nbsp; ] Pejabat Pelaksana / Fungsional</p>
-                </div>
-            </div>
-            <div>
-                <p class="font-bold underline mb-2">CATATAN / INSTRUKSI PIMPINAN:</p>
-                <div class="space-y-1.5 italic text-slate-600">
-                    <p>[ &nbsp; ] Process / Tindaklanjuti</p>
-                    <p>[ &nbsp; ] Pelajari & Laporkan</p>
-                    <p>[ &nbsp; ] Siapkan Bahan / Konsep</p>
-                    <p>[ &nbsp; ] Koordinasikan</p>
-                    <p>[ &nbsp; ] Arsipkan / File</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-8 text-right text-xs">
-            <p>Diteruskan tanggal: .......................................</p>
-            <p class="mt-12 font-bold underline">( _____________________________ )</p>
-            <p class="mr-6">NIP.</p>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 no-print">
-        <div class="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <p>&copy; 2026 Aplikasi E-Surat Administrasi Pemerintahan. Ready for Zenhosta Deployment.</p>
-            <p class="text-[11px] text-amber-500 font-semibold">SPBE Compliant System</p>
-        </div>
-    </footer>
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border border-amber-400/40">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message" class="text-xs font-semibold">Pesan Notifikasi</span>
+    </div>
 
-    <!-- JavaScript Application Logic -->
+    <!-- APPLICATION JAVASCRIPT LOGIC -->
     <script>
-        // Default Sample Data
-        const defaultSuratList = [
+        // Key Storage Constant
+        const STORAGE_KEY = 'esurat_pemerintah_db_v1';
+
+        // State variables
+        let suratData = [];
+        let currentFilter = 'all';
+        let currentTrackId = null;
+        let chartInstanceBulan = null;
+        let chartInstanceSifat = null;
+
+        // Sample Mock Data Generator
+        const sampleMockData = [
             {
-                id: 'SURAT-1700000000001',
-                jenis: 'Masuk',
-                no_agenda: 'SR-2026/001',
-                no_surat: '005/142/SETDA/2026',
-                tgl_surat: '2026-11-01',
-                pengirim: 'Kementerian Dalam Negeri RI',
-                tujuan: 'Kepala Dinas',
+                id: 'TRK-202611-001',
+                nomorSurat: '005/1042/DISKOMINFO/2026',
+                jenis: 'masuk',
+                tanggalSurat: '2026-11-01',
+                tanggalDiterima: '2026-11-02',
+                pengirim: 'Kementerian Komunikasi & Digital RI',
+                penerima: 'Kepala Dinas Kominfo',
+                perihal: 'Undangan Rapat Koordinasi Nasional Akselerasi SPBE dan Keamanan Siber',
                 sifat: 'Penting',
-                kategori: 'Undangan',
-                perihal: 'Rapat Koordinasi Nasional Evaluasi Layanan Publik Pemda 2026',
-                status_posisi: 'Disposisi Pimpinan / Kepala',
+                klasifikasi: 'Undangan',
+                targetUnit: 'Bidang Aplikasi Informatika',
+                catatanAwal: 'Berkas fisik diterima langsung oleh Petugas Agenda Umum',
+                status: 'proses',
+                catatanDisposisi: 'Hadiri rapat bersama Kabid Aptika dan siapkan paparan kesiapan infrastruktur data daerah.',
                 history: [
-                    { status: 'Registrasi Subbag Umum', timestamp: '2026-11-01 08:30' },
-                    { status: 'Verifikasi Kabag / Sekretaris', timestamp: '2026-11-01 10:15' },
-                    { status: 'Disposisi Pimpinan / Kepala', timestamp: '2026-11-02 09:00' }
+                    { status: 'diterima', title: 'Surat Diterima Sekretariat', time: '02 Nov 2026 - 08:30 WIB', note: 'Dicatat dalam buku agenda penerimaan' },
+                    { status: 'disposisi', title: 'Disposisi Kepala Dinas', time: '02 Nov 2026 - 11:15 WIB', note: 'Diteruskan ke Kabid Aptika' },
+                    { status: 'proses', title: 'Tindak Lanjut Bidang Aptika', time: '03 Nov 2026 - 09:00 WIB', note: 'Penyusunan materi presentasi oleh tim teknis' }
                 ]
             },
             {
-                id: 'SURAT-1700000000002',
-                jenis: 'Keluar',
-                no_agenda: 'SK-2026/002',
-                no_surat: '090/551/DISDIIK/2026',
-                tgl_surat: '2026-11-02',
-                pengirim: 'Dinas Pemerintahan',
-                tujuan: 'Bappeda Provinsi',
-                sifat: 'Biasa',
-                kategori: 'Laporan',
-                perihal: 'Laporan Realisasi Anggaran Triwulan III Tahun 2026',
-                status_posisi: 'Selesai & Diarsipkan',
+                id: 'TRK-202611-002',
+                nomorSurat: '020/215/SEKDA/2026',
+                jenis: 'masuk',
+                tanggalSurat: '2026-10-28',
+                tanggalDiterima: '2026-10-29',
+                pengirim: 'Sekretariat Daerah Provinsi',
+                penerima: 'Kepala Dinas Kominfo',
+                perihal: 'Surat Edaran Pertanggungjawaban Anggaran Triwulan IV T.A. 2026',
+                sifat: 'Sangat Rahasia',
+                klasifikasi: 'Surat Edaran',
+                targetUnit: 'Subbagian Keuangan & Kepegawaian',
+                catatanAwal: 'Lampiran 1 berkas cetak lengkap',
+                status: 'selesai',
+                catatanDisposisi: 'Kasubag Keuangan segera rekonsiliasi seluruh laporan kegiatan sebelum tgl 15.',
                 history: [
-                    { status: 'Registrasi Subbag Umum', timestamp: '2026-11-02 11:00' },
-                    { status: 'Tindak Lanjut Bidang / Unit', timestamp: '2026-11-02 14:20' },
-                    { status: 'Selesai & Diarsipkan', timestamp: '2026-11-03 16:00' }
+                    { status: 'diterima', title: 'Surat Diterima Sekretariat', time: '29 Okt 2026 - 09:00 WIB', note: 'Pengagendaan awal' },
+                    { status: 'disposisi', title: 'Disposisi Kepala Dinas', time: '29 Okt 2026 - 13:45 WIB', note: 'Sifat Sangat Rahasia dikirim ke Keuangan' },
+                    { status: 'proses', title: 'Tindak Lanjut Subag Keuangan', time: '30 Okt 2026 - 10:00 WIB', note: 'Penyusunan draft laporan pertanggungjawaban' },
+                    { status: 'selesai', title: 'Laporan Selesai & Diarsipkan', time: '01 Nov 2026 - 16:00 WIB', note: 'Arsip fisik berada di Ordner Keuangan 2026' }
+                ]
+            },
+            {
+                id: 'TRK-202611-003',
+                nomorSurat: '800/088/DISKOMINFO-IKP/2026',
+                jenis: 'keluar',
+                tanggalSurat: '2026-11-03',
+                tanggalDiterima: '2026-11-03',
+                pengirim: 'Dinas Komunikasi & Informatika',
+                penerima: 'Seluruh Kepala OPD Provinsi',
+                perihal: 'Permohonan Data Publikasi Capaian Kinerja Pembangunan Daerah 2026',
+                sifat: 'Biasa',
+                klasifikasi: 'Nota Dinas',
+                targetUnit: 'Bidang Informasi & Komunikasi Publik',
+                catatanAwal: 'Dikirimkan via Email Resmi dan Kurir Dinas',
+                status: 'verifikasi',
+                catatanDisposisi: 'Pastikan seluruh OPD menerima nota permohonan ini.',
+                history: [
+                    { status: 'diterima', title: 'Konsep Dibuat', time: '03 Nov 2026 - 08:00 WIB', note: 'Drafting oleh Bidang IKP' },
+                    { status: 'verifikasi', title: 'Verifikasi Paraf Hirarki', time: '03 Nov 2026 - 14:00 WIB', note: 'Proses Tanda Tangan Elektronik (TTE) Kadis' }
                 ]
             }
         ];
 
-        // Workflow Step Definitions
-        const workflowSteps = [
-            "Registrasi Subbag Umum",
-            "Verifikasi Kabag / Sekretaris",
-            "Disposisi Pimpinan / Kepala",
-            "Tindak Lanjut Bidang / Unit",
-            "Selesai & Diarsipkan"
-        ];
+        // Initialize App
+        window.onload = function() {
+            loadData();
+            renderDashboard();
+            renderRegisterTable();
+            populateDispositionDropdown();
+            
+            // Set default date input values to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggalSurat').value = today;
+        };
 
-        let activeTrackedSurat = null;
-
-        // Initialize Data in localStorage
-        function getSuratData() {
-            const data = localStorage.getItem('esurat_db');
-            if (!data) {
-                localStorage.setItem('esurat_db', JSON.stringify(defaultSuratList));
-                return defaultSuratList;
+        // Storage Operations
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    suratData = JSON.parse(stored);
+                } catch(e) {
+                    suratData = [...sampleMockData];
+                }
+            } else {
+                suratData = [...sampleMockData];
+                saveData();
             }
-            return JSON.parse(data);
         }
 
-        function saveSuratData(data) {
-            localStorage.setItem('esurat_db', JSON.stringify(data));
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(suratData));
         }
 
-        // Live Clock
-        function updateClock() {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const timeStr = now.toLocaleTimeString('id-ID');
-            document.getElementById('live-datetime').textContent = `${dateStr} - ${timeStr} WIB`;
+        function seedSampleData() {
+            suratData = [...sampleMockData];
+            saveData();
+            renderDashboard();
+            renderRegisterTable();
+            populateDispositionDropdown();
+            showToast('Sampel data berhasil dimuat kembali!');
         }
-        setInterval(updateClock, 1000);
-        updateClock();
 
-        // Tab Switcher
-        function switchTab(tabName) {
+        // Navigation Switcher
+        function switchTab(tabId) {
+            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Unhighlight all buttons
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('border-amber-500', 'text-amber-400');
-                btn.classList.add('border-transparent', 'text-slate-300');
+                btn.classList.remove('bg-gov-gold', 'text-slate-950', 'font-semibold', 'shadow');
+                btn.classList.add('text-slate-300');
             });
 
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`nav-${tabName}`);
+            // Show selected tab
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            // Highlight nav button
+            const activeBtn = document.getElementById(`nav-${tabId}`);
             if (activeBtn) {
-                activeBtn.classList.remove('border-transparent', 'text-slate-300');
-                activeBtn.classList.add('border-amber-500', 'text-amber-400');
+                activeBtn.classList.add('bg-gov-gold', 'text-slate-950', 'font-semibold', 'shadow');
+                activeBtn.classList.remove('text-slate-300');
             }
 
-            if (tabName === 'dashboard') updateDashboardStats();
-            if (tabName === 'arsip') renderArsipTable();
-            if (tabName === 'input') generateAgendaNumber();
+            // Tab specific triggers
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'register') renderRegisterTable();
+            if (tabId === 'disposisi') populateDispositionDropdown();
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Auto Generate Agenda Number
-        function generateAgendaNumber() {
-            const jenis = document.getElementById('jenis_surat').value;
-            const data = getSuratData();
-            const prefix = jenis === 'Masuk' ? 'SR-2026/' : 'SK-2026/';
-            const count = data.filter(d => d.jenis === jenis).length + 1;
-            const seq = String(count).padStart(3, '0');
-            document.getElementById('no_agenda').value = prefix + seq;
+        // Dashboard Visual Metrics & Charts
+        function renderDashboard() {
+            const total = suratData.length;
+            const masuk = suratData.filter(s => s.jenis === 'masuk').length;
+            const keluar = suratData.filter(s => s.jenis === 'keluar').length;
+            const proses = suratData.filter(s => s.status !== 'selesai').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-masuk').innerText = masuk;
+            document.getElementById('stat-keluar').innerText = keluar;
+            document.getElementById('stat-proses').innerText = proses;
+
+            // Render Recent Table
+            const recentTable = document.getElementById('dashboard-recent-table');
+            recentTable.innerHTML = '';
+
+            const recentList = [...suratData].reverse().slice(0, 5);
+            if(recentList.length === 0) {
+                recentTable.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada data surat.</td></tr>`;
+            } else {
+                recentList.forEach(item => {
+                    recentTable.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-3.5">
+                                <div class="font-bold text-slate-900">${item.id}</div>
+                                <div class="text-[10px] text-slate-500 font-mono">${item.nomorSurat}</div>
+                            </td>
+                            <td class="p-3.5">${item.pengirim}</td>
+                            <td class="p-3.5 font-medium text-slate-800 truncate max-w-xs" title="${item.perihal}">${item.perihal}</td>
+                            <td class="p-3.5">${getBadgeSifat(item.sifat)}</td>
+                            <td class="p-3.5">${getBadgeStatus(item.status)}</td>
+                            <td class="p-3.5 text-center">
+                                <button onclick="quickViewTrack('${item.id}')" class="px-2.5 py-1 bg-gov-blue text-white rounded text-[11px] hover:bg-blue-900">
+                                    <i class="fa-solid fa-route"></i> Lacak
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            renderCharts();
         }
 
-        document.getElementById('jenis_surat').addEventListener('change', generateAgendaNumber);
+        function renderCharts() {
+            // Chart 1: Bar Chart
+            const ctxBulan = document.getElementById('chartSuratBulan').getContext('2d');
+            if (chartInstanceBulan) chartInstanceBulan.destroy();
 
-        // Save New Surat
-        function saveSurat(e) {
-            e.preventDefault();
-            const data = getSuratData();
+            chartInstanceBulan = new Chart(ctxBulan, {
+                type: 'bar',
+                data: {
+                    labels: ['Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [
+                        { label: 'Surat Masuk', data: [12, 19, 15, 22, 18, 0], backgroundColor: '#1e3a8a', borderRadius: 6 },
+                        { label: 'Surat Keluar', data: [8, 12, 10, 14, 11, 0], backgroundColor: '#d97706', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
 
-            const jenis = document.getElementById('jenis_surat').value;
-            const no_agenda = document.getElementById('no_agenda').value;
-            const no_surat = document.getElementById('no_surat').value;
-            const tgl_surat = document.getElementById('tgl_surat').value;
-            const pengirim = document.getElementById('pengirim').value;
-            const tujuan = document.getElementById('tujuan').value;
-            const sifat = document.getElementById('sifat_surat').value;
-            const kategori = document.getElementById('kategori').value;
-            const perihal = document.getElementById('perihal').value;
-            const status_posisi = document.getElementById('status_posisi').value;
+            // Chart 2: Pie Chart Sifat Surat
+            const ctxSifat = document.getElementById('chartSifatSurat').getContext('2d');
+            if (chartInstanceSifat) chartInstanceSifat.destroy();
 
-            const now = new Date();
-            const timeFormatted = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0].substring(0,5);
+            const countBiasa = suratData.filter(s => s.sifat === 'Biasa').length;
+            const countPenting = suratData.filter(s => s.sifat === 'Penting').length;
+            const countRahasia = suratData.filter(s => s.sifat === 'Rahasia' || s.sifat === 'Sangat Rahasia').length;
+
+            chartInstanceSifat = new Chart(ctxSifat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Biasa', 'Penting', 'Rahasia/Sangat Rahasia'],
+                    datasets: [{
+                        data: [countBiasa || 1, countPenting || 2, countRahasia || 1],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Form Submission & Input
+        function toggleJenisForm(jenis) {
+            const pengirimLabel = document.querySelector('#field-pengirim-container label');
+            const penerimaInput = document.getElementById('penerima');
+
+            if (jenis === 'keluar') {
+                pengirimLabel.innerHTML = 'Pengirim (Unit Internal) <span class="text-red-500">*</span>';
+                document.getElementById('pengirim').value = 'Dinas Komunikasi & Informatika';
+                penerimaInput.value = '';
+                penerimaInput.placeholder = 'Instansi Luar / OPD Tujuan';
+            } else {
+                pengirimLabel.innerHTML = 'Pengirim / Instansi Asal <span class="text-red-500">*</span>';
+                document.getElementById('pengirim').value = '';
+                penerimaInput.value = 'Kepala Dinas Komunikasi & Informatika';
+            }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const jenis = document.querySelector('input[name="jenis"]:checked').value;
+            const nomorSurat = document.getElementById('nomorSurat').value.trim();
+            const tanggalSurat = document.getElementById('tanggalSurat').value;
+            const pengirim = document.getElementById('pengirim').value.trim();
+            const penerima = document.getElementById('penerima').value.trim();
+            const sifat = document.getElementById('sifat').value;
+            const klasifikasi = document.getElementById('klasifikasi').value;
+            const perihal = document.getElementById('perihal').value.trim();
+            const targetUnit = document.getElementById('targetUnit').value;
+            const catatanAwal = document.getElementById('catatanAwal').value.trim();
+
+            const newId = `TRK-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}-${String(suratData.length + 1).padStart(3, '0')}`;
+            const todayStr = new Date().toISOString().split('T')[0];
 
             const newSurat = {
-                id: 'SURAT-' + Date.now(),
+                id: newId,
+                nomorSurat,
                 jenis,
-                no_agenda,
-                no_surat,
-                tgl_surat,
+                tanggalSurat,
+                tanggalDiterima: todayStr,
                 pengirim,
-                tujuan,
+                penerima,
                 sifat,
-                kategori,
+                klasifikasi,
                 perihal,
-                status_posisi,
+                targetUnit,
+                catatanAwal,
+                status: 'diterima',
+                catatanDisposisi: 'Teragenda otomatis. Menunggu instruksi pimpinan.',
                 history: [
-                    { status: status_posisi, timestamp: timeFormatted }
+                    {
+                        status: 'diterima',
+                        title: 'Surat Diterima & Teragenda',
+                        time: `${todayStr} - ${new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB`,
+                        note: catatanAwal || 'Pengagendaan awal sistem'
+                    }
                 ]
             };
 
-            data.unshift(newSurat);
-            saveSuratData(data);
+            suratData.unshift(newSurat);
+            saveData();
 
-            alert('Data surat berhasil disimpan dan terdaftar dalam sistem tracking!');
-            resetForm();
-            switchTab('arsip');
-        }
-
-        function resetForm() {
+            showToast(`Surat berhasil diregister dengan Kode ${newId}`);
             document.getElementById('form-surat').reset();
-            generateAgendaNumber();
+            
+            // Switch directly to tracker
+            quickViewTrack(newId);
         }
 
-        // Render Dashboard
-        function updateDashboardStats() {
-            const data = getSuratData();
-            const masuk = data.filter(d => d.jenis === 'Masuk').length;
-            const keluar = data.filter(d => d.jenis === 'Keluar').length;
-            const selesai = data.filter(d => d.status_posisi === 'Selesai & Diarsipkan').length;
-            const proses = data.length - selesai;
-
-            document.getElementById('stat-masuk').textContent = masuk;
-            document.getElementById('stat-keluar').textContent = keluar;
-            document.getElementById('stat-proses').textContent = proses;
-            document.getElementById('stat-selesai').textContent = selesai;
-
-            // Render Recent Table
-            const tbody = document.getElementById('recent-table-body');
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada data surat.</td></tr>`;
+        // Tracking Module
+        function executeTrackingSearch() {
+            const query = document.getElementById('input-search-tracker').value.trim().toLowerCase();
+            if (!query) {
+                showToast('Masukkan nomor tracking atau nomor surat!');
                 return;
             }
 
-            data.slice(0, 5).forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="py-2.5 px-3 font-mono font-bold text-blue-600">${item.no_agenda}</td>
-                    <td class="py-2.5 px-3">${item.tgl_surat}</td>
-                    <td class="py-2.5 px-3 font-semibold">${item.pengirim}</td>
-                    <td class="py-2.5 px-3 truncate max-w-xs">${item.perihal}</td>
-                    <td class="py-2.5 px-3">
-                        <span class="px-2 py-0.5 text-[10px] rounded font-semibold ${item.status_posisi === 'Selesai & Diarsipkan' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                            ${item.status_posisi}
-                        </span>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            const found = suratData.find(s => s.id.toLowerCase() === query || s.nomorSurat.toLowerCase().includes(query));
+
+            if (found) {
+                renderTrackerResult(found);
+            } else {
+                showToast('Surat tidak ditemukan! Periksa kembali nomor input.');
+            }
         }
 
-        // Tracking Logic
-        function quickTrack() {
-            const val = document.getElementById('quick-track-input').value.trim();
-            if (!val) return alert('Masukkan Nomor Agenda atau Nomor Surat!');
-            document.getElementById('track-search-input').value = val;
+        function quickViewTrack(id) {
             switchTab('tracking');
-            executeTracking();
+            document.getElementById('input-search-tracker').value = id;
+            const found = suratData.find(s => s.id === id);
+            if (found) renderTrackerResult(found);
         }
 
-        function executeTracking() {
-            const query = document.getElementById('track-search-input').value.trim().toLowerCase();
-            const data = getSuratData();
+        function renderTrackerResult(surat) {
+            currentTrackId = surat.id;
 
-            const found = data.find(d => 
-                d.no_agenda.toLowerCase().includes(query) || 
-                d.no_surat.toLowerCase().includes(query)
-            );
-
-            const resultContainer = document.getElementById('tracking-result-container');
-            const emptyContainer = document.getElementById('tracking-empty');
-
-            if (!found) {
-                resultContainer.classList.add('hidden');
-                emptyContainer.classList.remove('hidden');
-                activeTrackedSurat = null;
-                return;
-            }
-
-            activeTrackedSurat = found;
-            emptyContainer.classList.add('hidden');
+            document.getElementById('tracker-empty-state').classList.add('hidden');
+            const resultContainer = document.getElementById('tracker-result-container');
             resultContainer.classList.remove('hidden');
 
-            document.getElementById('track-badge-type').textContent = `SURAT ${found.jenis.toUpperCase()}`;
-            document.getElementById('track-no-agenda').textContent = `AGENDA: ${found.no_agenda}`;
-            document.getElementById('track-no-surat').textContent = `No. Surat: ${found.no_surat}`;
-            document.getElementById('track-pengirim').textContent = found.pengirim;
-            document.getElementById('track-tujuan').textContent = found.tujuan;
-            document.getElementById('track-perihal').textContent = found.perihal;
-            document.getElementById('update-status-select').value = found.status_posisi;
+            document.getElementById('track-id').innerText = surat.id;
+            document.getElementById('track-perihal').innerText = surat.perihal;
+            document.getElementById('track-nomor').innerText = surat.nomorSurat;
+            document.getElementById('track-pengirim').innerText = surat.pengirim;
 
-            // Render Timeline
-            const currentStepIdx = workflowSteps.indexOf(found.status_posisi);
-            const timelineContainer = document.getElementById('timeline-steps');
-            timelineContainer.innerHTML = '';
+            document.getElementById('track-jenis-badge').innerText = surat.jenis === 'masuk' ? 'Surat Masuk' : 'Surat Keluar';
+            document.getElementById('track-sifat-badge').innerText = surat.sifat;
 
-            workflowSteps.forEach((step, idx) => {
-                const isPassed = idx <= currentStepIdx;
-                const isCurrent = idx === currentStepIdx;
-                const historyRecord = found.history.find(h => h.status === step);
+            document.getElementById('quick-status-select').value = surat.status;
+            document.getElementById('btn-print-from-track').onclick = () => openDispositionFor(surat.id);
 
-                const item = document.createElement('div');
-                item.className = "relative pl-6";
-                item.innerHTML = `
-                    <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full ${isCurrent ? 'bg-amber-500 ring-4 ring-amber-200' : (isPassed ? 'bg-blue-600' : 'bg-slate-300')}"></div>
-                    <div class="${isCurrent ? 'font-bold text-slate-900' : (isPassed ? 'text-slate-800 font-semibold' : 'text-slate-400')}">
-                        <p class="text-sm">${step}</p>
-                        ${historyRecord ? `<p class="text-[11px] text-slate-500 font-normal"><i class="fa-regular fa-clock"></i> Terverifikasi: ${historyRecord.timestamp}</p>` : `<p class="text-[11px] text-slate-400 font-normal italic">Belum diproses</p>`}
+            // Build Visual Timeline Stepper
+            const timelineWrapper = document.getElementById('timeline-stepper-wrapper');
+            timelineWrapper.innerHTML = '';
+
+            const stages = [
+                { key: 'diterima', title: '1. Diterima & Pengagendaan', icon: 'fa-inbox' },
+                { key: 'disposisi', title: '2. Disposisi Pimpinan / Sekda', icon: 'fa-user-tie' },
+                { key: 'proses', title: '3. Tindak Lanjut Bidang / Unit', icon: 'fa-gears' },
+                { key: 'verifikasi', title: '4. Verifikasi Akhir & Paraf', icon: 'fa-file-signature' },
+                { key: 'selesai', title: '5. Selesai & Diarsipkan', icon: 'fa-box-archive' }
+            ];
+
+            const currentStageIndex = stages.findIndex(s => s.key === surat.status);
+
+            stages.forEach((stage, idx) => {
+                const isPassed = idx <= currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+
+                const historyItem = surat.history.find(h => h.status === stage.key);
+
+                const circleColor = isPassed 
+                    ? (isCurrent ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-100' : 'bg-gov-blue text-white') 
+                    : 'bg-slate-200 text-slate-400';
+
+                timelineWrapper.innerHTML += `
+                    <div class="relative flex items-start space-x-4">
+                        <div class="absolute -left-[35px] top-0 w-8 h-8 rounded-full ${circleColor} flex items-center justify-center text-xs font-bold shadow">
+                            <i class="fa-solid ${stage.icon}"></i>
+                        </div>
+                        <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-bold text-xs ${isPassed ? 'text-slate-900' : 'text-slate-400'}">${stage.title}</h5>
+                                ${historyItem ? `<span class="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">${historyItem.time}</span>` : '<span class="text-[10px] text-slate-400 italic">Menunggu</span>'}
+                            </div>
+                            <p class="text-xs text-slate-600 mt-1">${historyItem ? historyItem.note : 'Tahapan ini belum diproses.'}</p>
+                        </div>
                     </div>
                 `;
-                timelineContainer.appendChild(item);
             });
         }
 
-        function updateStatusFromTracking() {
-            if (!activeTrackedSurat) return;
-            const newStatus = document.getElementById('update-status-select').value;
-            const data = getSuratData();
-            const target = data.find(d => d.id === activeTrackedSurat.id);
+        function updateCurrentTrackStatus() {
+            if (!currentTrackId) return;
 
-            if (target) {
-                target.status_posisi = newStatus;
-                const now = new Date();
-                const timeFormatted = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0].substring(0,5);
+            const newStatus = document.getElementById('quick-status-select').value;
+            const index = suratData.findIndex(s => s.id === currentTrackId);
 
-                if (!target.history.some(h => h.status === newStatus)) {
-                    target.history.push({ status: newStatus, timestamp: timeFormatted });
+            if (index !== -1) {
+                const surat = suratData[index];
+                if (surat.status === newStatus) {
+                    showToast('Status surat sudah ada pada tahap ini.');
+                    return;
                 }
 
-                saveSuratData(data);
-                alert('Status posisi disposisi berhasil diperbarui!');
-                executeTracking();
+                surat.status = newStatus;
+                
+                const timeStr = `${new Date().toISOString().split('T')[0]} - ${new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB`;
+                surat.history.push({
+                    status: newStatus,
+                    title: `Pembaruan Status ke ${newStatus.toUpperCase()}`,
+                    time: timeStr,
+                    note: `Status diperbarui oleh Administrator Agenda`
+                });
+
+                saveData();
+                renderTrackerResult(surat);
+                showToast(`Status surat berhasil diperbarui!`);
             }
         }
 
-        // Render Table Arsip
-        function renderArsipTable() {
-            const data = getSuratData();
-            const filterJenis = document.getElementById('filter-jenis').value;
-            const searchKeyword = document.getElementById('filter-search').value.toLowerCase();
-            const tbody = document.getElementById('arsip-table-body');
-            tbody.innerHTML = '';
+        // Register & Archive Table Rendering
+        function filterRegister(type) {
+            currentFilter = type;
+            document.querySelectorAll('#tab-register button[id^="filter-btn-"]').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow', 'text-slate-800');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = document.getElementById(`filter-btn-${type}`);
+            if (activeBtn) activeBtn.classList.add('bg-white', 'shadow', 'text-slate-800');
 
-            let filtered = data;
+            renderRegisterTable();
+        }
 
-            if (filterJenis !== 'ALL') {
-                filtered = filtered.filter(d => d.jenis === filterJenis);
-            }
+        function renderRegisterTable() {
+            const tableBody = document.getElementById('register-table-body');
+            const searchVal = document.getElementById('search-register-input').value.toLowerCase().trim();
 
-            if (searchKeyword) {
-                filtered = filtered.filter(d => 
-                    d.no_agenda.toLowerCase().includes(searchKeyword) ||
-                    d.no_surat.toLowerCase().includes(searchKeyword) ||
-                    d.pengirim.toLowerCase().includes(searchKeyword) ||
-                    d.perihal.toLowerCase().includes(searchKeyword)
+            tableBody.innerHTML = '';
+
+            let filtered = suratData.filter(s => {
+                if (currentFilter === 'masuk') return s.jenis === 'masuk';
+                if (currentFilter === 'keluar') return s.jenis === 'keluar';
+                if (currentFilter === 'proses') return s.status !== 'selesai';
+                return true;
+            });
+
+            if (searchVal) {
+                filtered = filtered.filter(s => 
+                    s.nomorSurat.toLowerCase().includes(searchVal) ||
+                    s.perihal.toLowerCase().includes(searchVal) ||
+                    s.pengirim.toLowerCase().includes(searchVal) ||
+                    s.id.toLowerCase().includes(searchVal)
                 );
             }
 
+            document.getElementById('register-count').innerText = filtered.length;
+
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">Tidak ada data persuratan ditemukan.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Tidak ada berkas surat yang sesuai filter.</td></tr>`;
                 return;
             }
 
             filtered.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="py-3 px-3 font-mono font-bold text-blue-600">${item.no_agenda}</td>
-                    <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.jenis === 'Masuk' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}">
-                            ${item.jenis}
-                        </span>
-                    </td>
-                    <td class="py-3 px-3 font-medium">${item.no_surat}</td>
-                    <td class="py-3 px-3 whitespace-nowrap">${item.tgl_surat}</td>
-                    <td class="py-3 px-3 font-semibold">${item.pengirim}</td>
-                    <td class="py-3 px-3 max-w-xs truncate">${item.perihal}</td>
-                    <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 text-[10px] rounded font-semibold ${item.sifat === 'Penting' || item.sifat === 'Kilat/Sangat Penting' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}">
-                            ${item.sifat}
-                        </span>
-                    </td>
-                    <td class="py-3 px-3">
-                        <span class="text-[11px] font-semibold text-slate-700 block">${item.status_posisi}</span>
-                    </td>
-                    <td class="py-3 px-3 text-center">
-                        <div class="flex justify-center space-x-1">
-                            <button onclick="trackSpecific('${item.no_agenda}')" title="Tracking" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
-                                <i class="fa-solid fa-magnifying-glass-location"></i>
-                            </button>
-                            <button onclick="printLembarDisposisiFor('${item.id}')" title="Cetak Lembar Disposisi" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded">
-                                <i class="fa-solid fa-print"></i>
-                            </button>
-                            <button onclick="deleteSurat('${item.id}')" title="Hapus Data" class="p-1.5 text-red-600 hover:bg-red-50 rounded">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </td>
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-900 font-mono">${item.id}</div>
+                            <div class="text-[11px] text-slate-500 font-mono">${item.nomorSurat}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-semibold text-slate-800">${item.tanggalSurat}</div>
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.jenis === 'masuk' ? 'bg-blue-100 text-blue-800' : 'bg-indigo-100 text-indigo-800'}">
+                                ${item.jenis}
+                            </span>
+                        </td>
+                        <td class="p-4 max-w-xs">
+                            <div class="font-bold text-slate-900 truncate" title="${item.pengirim}">${item.pengirim}</div>
+                            <div class="text-slate-600 line-clamp-2 mt-0.5" title="${item.perihal}">${item.perihal}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="mb-1">${getBadgeSifat(item.sifat)}</div>
+                            <div class="text-[11px] text-slate-500"><i class="fa-solid fa-sitemap mr-1"></i>${item.targetUnit}</div>
+                        </td>
+                        <td class="p-4">
+                            ${getBadgeStatus(item.status)}
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center space-x-1.5">
+                                <button onclick="openDetailModal('${item.id}')" title="Detail Surat" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button onclick="quickViewTrack('${item.id}')" title="Lacak Progress" class="p-2 bg-gov-blue hover:bg-blue-900 text-white rounded-lg">
+                                    <i class="fa-solid fa-route"></i>
+                                </button>
+                                <button onclick="openDispositionFor('${item.id}')" title="Cetak Disposisi" class="p-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                                <button onclick="deleteSurat('${item.id}')" title="Hapus Berkas" class="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
         }
 
-        function trackSpecific(noAgenda) {
-            document.getElementById('track-search-input').value = noAgenda;
-            switchTab('tracking');
-            executeTracking();
-        }
-
         function deleteSurat(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus arsip surat ini?')) {
-                let data = getSuratData();
-                data = data.filter(d => d.id !== id);
-                saveSuratData(data);
-                renderArsipTable();
+            if (confirm(`Apakah Anda yakin ingin menghapus arsip surat ${id}?`)) {
+                suratData = suratData.filter(s => s.id !== id);
+                saveData();
+                renderRegisterTable();
+                renderDashboard();
+                showToast(`Surat ${id} telah dihapus dari arsip.`);
             }
         }
 
-        function printLembarDisposisi() {
-            if (!activeTrackedSurat) return;
-            populatePrintArea(activeTrackedSurat);
-            window.print();
-        }
+        // Printable Disposition View Generator
+        function populateDispositionDropdown() {
+            const select = document.getElementById('disposisi-select-surat');
+            select.innerHTML = '';
 
-        function printLembarDisposisiFor(id) {
-            const data = getSuratData();
-            const target = data.find(d => d.id === id);
-            if (target) {
-                populatePrintArea(target);
-                window.print();
+            if (suratData.length === 0) {
+                select.innerHTML = `<option value="">Tidak Ada Data Surat</option>`;
+                return;
             }
+
+            suratData.forEach(item => {
+                select.innerHTML += `<option value="${item.id}">${item.id} - ${item.perihal.substring(0, 45)}...</option>`;
+            });
+
+            loadDispositionPreview(select.value);
         }
 
-        function populatePrintArea(item) {
-            document.getElementById('print-pengirim').textContent = item.pengirim;
-            document.getElementById('print-no-agenda').textContent = item.no_agenda;
-            document.getElementById('print-no-surat').textContent = item.no_surat;
-            document.getElementById('print-tgl-surat').textContent = item.tgl_surat;
-            document.getElementById('print-sifat').textContent = item.sifat;
-            document.getElementById('print-kategori').textContent = item.kategori;
-            document.getElementById('print-perihal').textContent = item.perihal;
+        function openDispositionFor(id) {
+            switchTab('disposisi');
+            document.getElementById('disposisi-select-surat').value = id;
+            loadDispositionPreview(id);
         }
 
-        // Initialize view on page load
-        window.onload = function() {
-            getSuratData();
-            updateDashboardStats();
-        };
+        function loadDispositionPreview(id) {
+            const surat = suratData.find(s => s.id === id);
+            if (!surat) return;
+
+            document.getElementById('disp-pengirim').innerText = surat.pengirim;
+            document.getElementById('disp-tgl-diterima').innerText = surat.tanggalDiterima;
+            document.getElementById('disp-no-surat').innerText = surat.nomorSurat;
+            document.getElementById('disp-no-agenda').innerText = surat.id;
+            document.getElementById('disp-tgl-surat').innerText = surat.tanggalSurat;
+            document.getElementById('disp-sifat').innerText = surat.sifat.toUpperCase();
+            document.getElementById('disp-perihal').innerText = surat.perihal;
+            document.getElementById('disp-catatan-pimpinan').innerText = `"${surat.catatanDisposisi || 'Mohon ditindaklanjuti sesuai prosedur dinas.'}"`;
+            document.getElementById('disp-kode-verifikasi').innerText = surat.id;
+
+            // Checkbox highlight based on target unit
+            document.getElementById('chk-aptika').checked = surat.targetUnit.includes('Aplikasi Informatika');
+            document.getElementById('chk-ikp').checked = surat.targetUnit.includes('Informasi');
+            document.getElementById('chk-sandi').checked = surat.targetUnit.includes('Persandian');
+            document.getElementById('chk-keuangan').checked = surat.targetUnit.includes('Keuangan');
+        }
+
+        // Modals & UI Helpers
+        function openDetailModal(id) {
+            const surat = suratData.find(s => s.id === id);
+            if (!surat) return;
+
+            const modalBody = document.getElementById('modal-content-body');
+            modalBody.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div><strong class="text-slate-500 block">Kode Agenda:</strong> <span class="font-mono font-bold text-slate-900">${surat.id}</span></div>
+                    <div><strong class="text-slate-500 block">Nomor Surat:</strong> <span class="font-mono font-bold text-slate-900">${surat.nomorSurat}</span></div>
+                    <div><strong class="text-slate-500 block">Tanggal Surat:</strong> ${surat.tanggalSurat}</div>
+                    <div><strong class="text-slate-500 block">Sifat Kerahasiaan:</strong> ${surat.sifat}</div>
+                </div>
+                <div>
+                    <strong class="text-slate-500 block mb-1">Pengirim / Instansi Asal:</strong>
+                    <div class="p-2.5 bg-slate-100 rounded-lg text-slate-900 font-semibold">${surat.pengirim}</div>
+                </div>
+                <div>
+                    <strong class="text-slate-500 block mb-1">Perihal / Isi Ringkas:</strong>
+                    <div class="p-3 bg-amber-50/50 border border-amber-200 rounded-lg text-slate-800 leading-relaxed">${surat.perihal}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><strong class="text-slate-500 block">Target Unit Disposisi:</strong> ${surat.targetUnit}</div>
+                    <div><strong class="text-slate-500 block">Status Terakhir:</strong> ${surat.status.toUpperCase()}</div>
+                </div>
+            `;
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        function getBadgeSifat(sifat) {
+            if (sifat === 'Sangat Rahasia' || sifat === 'Rahasia') {
+                return `<span class="px-2 py-0.5 bg-red-100 text-red-800 rounded font-bold text-[10px]"><i class="fa-solid fa-lock mr-1"></i>${sifat}</span>`;
+            }
+            if (sifat === 'Penting') {
+                return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[10px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${sifat}</span>`;
+            }
+            return `<span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-bold text-[10px]">${sifat}</span>`;
+        }
+
+        function getBadgeStatus(status) {
+            const map = {
+                'diterima': { label: 'Teragenda', bg: 'bg-slate-100 text-slate-800' },
+                'disposisi': { label: 'Disposisi Kadis', bg: 'bg-amber-100 text-amber-900' },
+                'proses': { label: 'Proses Bidang', bg: 'bg-blue-100 text-blue-900' },
+                'verifikasi': { label: 'Verifikasi TTE', bg: 'bg-purple-100 text-purple-900' },
+                'selesai': { label: 'Selesai & Arsip', bg: 'bg-emerald-100 text-emerald-900' }
+            };
+            const current = map[status] || { label: status, bg: 'bg-slate-100 text-slate-800' };
+            return `<span class="px-2.5 py-1 ${current.bg} rounded-full font-bold text-[10px] inline-block">${current.label}</span>`;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3500);
+        }
     </script>
 </body>
 </html>
